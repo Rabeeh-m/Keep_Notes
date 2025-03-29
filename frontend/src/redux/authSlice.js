@@ -2,12 +2,16 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { register, login as loginApi } from '../services/api';
 
+const accessToken = localStorage.getItem('access_token');
+const refreshToken = localStorage.getItem('refresh_token');
+const storedUser = localStorage.getItem('user');
+
 const initialState = {
-  user: null,
+  user: storedUser ? JSON.parse(storedUser) : null,
   status: 'idle',
   error: null,
-  accessToken: null,
-  refreshToken: null,
+  accessToken: accessToken || null,
+  refreshToken: refreshToken || null,
 };
 
 export const registerUser = createAsyncThunk(
@@ -27,7 +31,6 @@ export const loginUser = createAsyncThunk(
   async (credentials, { rejectWithValue }) => {
     try {
       const response = await loginApi(credentials);
-      console.log('Login API response:', response.data); // Debug
       return response.data;
     } catch (err) {
       return rejectWithValue(err.response.data);
@@ -45,6 +48,7 @@ const authSlice = createSlice({
       state.refreshToken = null;
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
     },
     setCredentials(state, action) {
       state.user = action.payload.user;
@@ -52,15 +56,12 @@ const authSlice = createSlice({
       state.refreshToken = action.payload.refresh;
       localStorage.setItem('access_token', action.payload.access);
       localStorage.setItem('refresh_token', action.payload.refresh);
+      localStorage.setItem('user', JSON.stringify(action.payload.user)); // Store user info
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(registerUser.pending, (state) => {
-        state.status = 'loading';
-      })
       .addCase(registerUser.fulfilled, (state, action) => {
-        state.status = 'succeeded';
         state.user = {
           user_id: action.payload.user_id,
           user_name: action.payload.user_name,
@@ -70,37 +71,18 @@ const authSlice = createSlice({
         state.refreshToken = action.payload.refresh;
         localStorage.setItem('access_token', action.payload.access);
         localStorage.setItem('refresh_token', action.payload.refresh);
-        console.log('Tokens stored after register:', {
-          access: localStorage.getItem('access_token'),
-          refresh: localStorage.getItem('refresh_token'),
-        }); // Debug
-      })
-      .addCase(registerUser.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.payload;
-      })
-      .addCase(loginUser.pending, (state) => {
-        state.status = 'loading';
+        localStorage.setItem('user', JSON.stringify(state.user)); // Persist user
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        state.status = 'succeeded';
         state.user = {
           user_id: action.payload.user_id,
           user_name: action.payload.user_name,
-          // user_email might not be in your response, remove if not needed
         };
         state.accessToken = action.payload.access;
         state.refreshToken = action.payload.refresh;
         localStorage.setItem('access_token', action.payload.access);
         localStorage.setItem('refresh_token', action.payload.refresh);
-        console.log('Tokens stored after login:', {
-          access: localStorage.getItem('access_token'),
-          refresh: localStorage.getItem('refresh_token'),
-        }); // Debug
-      })
-      .addCase(loginUser.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.payload;
+        localStorage.setItem('user', JSON.stringify(state.user)); // Persist user
       });
   },
 });

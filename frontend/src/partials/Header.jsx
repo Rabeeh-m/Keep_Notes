@@ -19,7 +19,7 @@ function Header() {
   };
 
   const openModal = (e) => {
-    e.preventDefault(); // Prevent Link navigation
+    e.preventDefault(); 
     if (!user) {
       navigate('/login');
       return;
@@ -42,8 +42,7 @@ function Header() {
     try {
       await createNote(formData);
       closeModal();
-      // Optionally, navigate to dashboard or refresh notes if on dashboard
-      navigate('/dashboard');
+      navigate('/');
     } catch (err) {
       setError('Failed to create note');
     }
@@ -53,12 +52,12 @@ function Header() {
     <>
       <header className="bg-black text-white py-4 px-6 border-b border-gray-700">
         <div className="container mx-auto flex justify-between items-center">
-          {/* Left Side: Project Name */}
+    
           <Link to="/" className="text-2xl font-bold hover:text-gray-300 transition-colors">
             Keep Notes
           </Link>
 
-          {/* Right Side: Navigation */}
+   
           <nav className="flex items-center space-x-6">
             <Link
               to="/about"
@@ -99,8 +98,8 @@ function Header() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-75 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <div className="fixed inset-0 bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md border-2 border-black">
             <h2 className="text-xl font-bold mb-4 text-black">Add New Note</h2>
             <form onSubmit={handleSubmit}>
               <div className="mb-4">

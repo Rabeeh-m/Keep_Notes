@@ -6,6 +6,8 @@ from django.contrib.auth.hashers import check_password
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, Note
 from rest_framework.permissions import IsAuthenticated,AllowAny
+import jwt
+from django.conf import settings
 
 class RegisterView(APIView):
     def post(self, request):
@@ -40,18 +42,34 @@ class LoginView(APIView):
     
     
 class NoteListCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        token = request.headers.get('Authorization', '').split('Bearer ')[-1]
+        try:
+            decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+            user_id = decoded['user_id']
+            user = User.objects.get(user_id=user_id)
+        except (jwt.InvalidTokenError, User.DoesNotExist, KeyError):
+            return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        notes = Note.objects.filter(user=user)
+        serializer = NoteSerializer(notes, many=True)
+        return Response(serializer.data)
 
     def post(self, request):
-        print("POST - Authenticated user:", request.user)  # Debug
-        print("User ID:", request.user.user_id)  # Debug
-        print("Request data:", request.data)  # Debug
+        token = request.headers.get('Authorization', '').split('Bearer ')[-1]
+        try:
+            decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+            user_id = decoded['user_id']
+            user = User.objects.get(user_id=user_id)
+        except (jwt.InvalidTokenError, User.DoesNotExist, KeyError):
+            return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        print("Authenticated user ID from token:", user_id)  # Debug
         data = request.data.copy()
         serializer = NoteSerializer(data=data)
         if serializer.is_valid():
-            print("Validated data before save:", serializer.validated_data)  # Debug
-            serializer.save(user=request.user)
-            print("Saved note:", serializer.data)  # Debug
+            serializer.save(user=user)  # Pass the User object directly
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         print("Serializer errors:", serializer.errors)  # Debug
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
