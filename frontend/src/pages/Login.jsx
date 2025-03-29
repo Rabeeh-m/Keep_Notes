@@ -23,6 +23,11 @@ function Login() {
 
     try {
       const result = await dispatch(loginUser(formData)).unwrap();
+      console.log('Login response:', result);
+      console.log('LocalStorage after login:', {
+        access: localStorage.getItem('access_token'),
+        refresh: localStorage.getItem('refresh_token'),
+      });
       if (result) {
         navigate('/');
       }

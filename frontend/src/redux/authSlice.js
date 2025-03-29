@@ -1,3 +1,4 @@
+
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { register, login as loginApi } from '../services/api';
 
@@ -26,6 +27,7 @@ export const loginUser = createAsyncThunk(
   async (credentials, { rejectWithValue }) => {
     try {
       const response = await loginApi(credentials);
+      console.log('Login API response:', response.data); // Debug
       return response.data;
     } catch (err) {
       return rejectWithValue(err.response.data);
@@ -48,6 +50,8 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.accessToken = action.payload.access;
       state.refreshToken = action.payload.refresh;
+      localStorage.setItem('access_token', action.payload.access);
+      localStorage.setItem('refresh_token', action.payload.refresh);
     },
   },
   extraReducers: (builder) => {
@@ -57,9 +61,19 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.user = action.payload.user;
+        state.user = {
+          user_id: action.payload.user_id,
+          user_name: action.payload.user_name,
+          user_email: action.payload.user_email,
+        };
         state.accessToken = action.payload.access;
         state.refreshToken = action.payload.refresh;
+        localStorage.setItem('access_token', action.payload.access);
+        localStorage.setItem('refresh_token', action.payload.refresh);
+        console.log('Tokens stored after register:', {
+          access: localStorage.getItem('access_token'),
+          refresh: localStorage.getItem('refresh_token'),
+        }); // Debug
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.status = 'failed';
@@ -73,10 +87,16 @@ const authSlice = createSlice({
         state.user = {
           user_id: action.payload.user_id,
           user_name: action.payload.user_name,
-          user_email: action.payload.user_email,
+          // user_email might not be in your response, remove if not needed
         };
         state.accessToken = action.payload.access;
         state.refreshToken = action.payload.refresh;
+        localStorage.setItem('access_token', action.payload.access);
+        localStorage.setItem('refresh_token', action.payload.refresh);
+        console.log('Tokens stored after login:', {
+          access: localStorage.getItem('access_token'),
+          refresh: localStorage.getItem('refresh_token'),
+        }); // Debug
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.status = 'failed';

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import User, Note
 from django.contrib.auth.hashers import make_password
 
 class UserSerializer(serializers.ModelSerializer):
@@ -15,3 +15,10 @@ class UserSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     user_email = serializers.EmailField()
     password = serializers.CharField()
+    
+    
+class NoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Note
+        fields = ['note_id', 'note_title', 'note_content', 'last_update', 'created_on', 'user']
+        extra_kwargs = {'user': {'read_only': True}}
